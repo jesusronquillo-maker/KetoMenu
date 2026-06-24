@@ -1,0 +1,20 @@
+{
+  "name": "vibefast",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Boilerplate para el Curso de Vibecoding Remotto — Next.js + Supabase + OpenAI + MCP, con docs estilo ShipFast",
+  "workspaces": [
+    "web"
+  ],
+  "scripts": {
+    "dev": "yarn workspace web dev",
+    "build": "yarn workspace web build",
+    "start": "yarn workspace web start",
+    "lint": "yarn workspace web lint"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "yarn": "^1.22.0"
+  },
+  "packageManager": "yarn@1.22.22"
+}

@@ -1,0 +1,64 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: ["light --default", "dark --prefersdark"];
+}
+
+/* Tokens del producto — los colores del config.js se inyectan vía variables CSS */
+:root {
+  --vf-primary: theme(--color-violet-600);
+  --vf-radius: 0.75rem;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Prose tweaks para /docs */
+.prose-vf {
+  @apply max-w-none;
+}
+.prose-vf h1 {
+  @apply text-4xl font-bold tracking-tight mt-2 mb-6;
+}
+.prose-vf h2 {
+  @apply text-2xl font-semibold tracking-tight mt-10 mb-4 pb-2 border-b border-base-300;
+}
+.prose-vf h3 {
+  @apply text-xl font-semibold mt-8 mb-3;
+}
+.prose-vf p {
+  @apply leading-7 my-4 text-base-content/85;
+}
+.prose-vf ul {
+  @apply list-disc pl-6 my-4 space-y-1;
+}
+.prose-vf ol {
+  @apply list-decimal pl-6 my-4 space-y-1;
+}
+.prose-vf a {
+  @apply text-primary underline underline-offset-2 hover:text-primary/80;
+}
+.prose-vf code:not(pre code) {
+  @apply rounded bg-base-200 px-1.5 py-0.5 text-sm font-mono;
+}
+.prose-vf pre {
+  @apply rounded-lg bg-neutral text-neutral-content p-4 overflow-x-auto my-6 text-sm font-mono;
+}
+.prose-vf table {
+  @apply w-full text-sm my-6 border-collapse;
+}
+.prose-vf th {
+  @apply text-left font-semibold p-3 border-b-2 border-base-300;
+}
+.prose-vf td {
+  @apply p-3 border-b border-base-300 align-top;
+}
+.prose-vf hr {
+  @apply my-8 border-base-300;
+}
