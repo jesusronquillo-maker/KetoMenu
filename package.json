@@ -13,7 +13,7 @@
     "lint": "yarn workspace web lint"
   },
   "engines": {
-    "node": ">=20.0.0",
+    "node": "^20.19.0 || ^22.13.0 || >=24",
     "yarn": "^1.22.0"
   },
   "packageManager": "yarn@1.22.22"

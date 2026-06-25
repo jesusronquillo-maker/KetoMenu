@@ -1,106 +1,105 @@
-# Checkpoint — VibeFast boilerplate, Fase 0 completa
+# Checkpoint — VibeFast boilerplate, Fases 0-2 completas
 
-**Última actualización**: sesión interrumpida por disco lleno en `/private/tmp/claude-501` (no había espacio para correr `yarn install`).
+**Última actualización**: Fase 0 verificada, **Fase 1 (Auth + DB)** y **Fase 2 (Email con Resend)** implementadas y build/dev-verificadas.
+
+## Fase 2 (Email) — ✅ código completo + build/dev verificado
+
+### Archivos creados
+- `web/lib/resend/client.js` — cliente Resend, devuelve `null` si email off (no-op silencioso).
+- `web/lib/resend/templates/WaitlistConfirm.js` y `Welcome.js` — React Email, copy desde config.js.
+- `web/lib/resend/send.js` — `sendWaitlistConfirm(to)`, `sendWelcome(to, name)`.
+- `web/app/api/webhooks/resend/route.js` — eventos de email, verificación svix opcional (gated por `RESEND_WEBHOOK_SECRET`).
+- Deps agregadas: `resend`, `@react-email/components`, `svix`.
+
+### Cableado
+- `/api/waitlist` → manda `WaitlistConfirm` con `after()` (no bloquea UI), solo en alta nueva.
+- `/auth/callback` → manda `Welcome` con `after()`, solo en primer login (compara created_at vs last_sign_in_at, ventana 10s).
+
+### Verificado
+- `yarn build` limpio (incluye `/api/webhooks/resend`).
+- Dev smoke: `POST /api/webhooks/resend` → 200 `{ok:true}` (path sin-secret loguea warning correcto); `/docs/features/email` → 200.
+
+### Pendiente manual (necesita tus credenciales)
+- Agrega a `web/.env.local`: `RESEND_API_KEY=re_...` y (para webhook) `RESEND_WEBHOOK_SECRET=whsec_...`.
+  - ⚠️ No pude editar `.env.example` (política de archivos env). Estas 2 vars están documentadas en `docs/features/email`.
+- Verifica tu dominio en Resend y ajusta `config.email.from` (o usa `onboarding@resend.dev` en dev).
+- E2E: anótate al waitlist → llega el correo de confirmación; primer login con Google → llega el Welcome.
+
+### Diferido a fase de docs (Fase 7)
+- Rellenar `docs/deploy/{vercel,supabase-produccion,dominio}.mdx` (hoy son stubs).
+- Script `yarn vibefast init` (opcional según el plan).
+
+---
+
+## Fase 1 (Auth + DB) — ✅ código completo + build/dev verificado
 
 ## Estado actual
 
-**Fase 0 (Andamiaje) está 100% completa en código** — solo falta verificar que `yarn dev` levanta sin errores. Esto no se pudo automatizar porque el tmp de Claude estaba lleno.
+- **Fase 0** — ✅ verificada. Se arreglaron 3 bugs que solo aparecían al correr de verdad:
+  1. **Node**: el repo requería `>=20` y con Node 23 (non-LTS) fallaba `eslint-visitor-keys`. Ahora se fija Node 20/22 LTS vía `.nvmrc` (`22`) y `engines`. **Usa `nvm use` antes de trabajar.**
+  2. **MDX**: `{placeholder}` en prosa rompía el build (acorn lo lee como expresión JS). Escapado a `\{...}` en quick-start y semana-1.
+  3. **Ruta /docs**: el catch-all opcional `[[...slug]]` chocaba con `docs/page.js` en `next dev`. Cambiado a catch-all requerido `[...slug]`; el índice lo sirve `docs/page.js`.
+  - También se agregó `typescript` como devDep (lo exige `eslint-config-next`; no implica escribir TS).
 
-### Tareas completadas
+- **Fase 1** — ✅ código completo + `yarn build` limpio (46 páginas). Falta **verificación end-to-end manual** (requiere tus credenciales, ver abajo).
 
-- [x] #1 Bootstrap monorepo (yarn workspaces, root package.json, .gitignore, .editorconfig, README)
-- [x] #2 Scaffold Next.js 15 en `/web` (App Router + JavaScript + Tailwind 4 + DaisyUI 5)
-- [x] #3 `web/config.js` central (branding, features, copy de landing)
-- [x] #4 Landing modular (Hero, Features, FAQ, Waitlist, Navbar, Footer) — todo lee de config.js
-- [x] #5 Ruta `/docs` MDX con sidebar auto-generada del filesystem + componentes especiales (PromptBox, Callout, Checkpoint, StackBadge, VideoLoom)
-- [x] #6 Esqueleto `docs-content/` con 31 archivos MDX (3 intro, 3 setup, 11 tutoriales semanales, 10 features, 2 componentes, 4 recetas, 3 deploy, 1 troubleshooting)
-- [x] #7 Verificación — **pendiente manual por ti** (ver abajo)
+### Archivos creados en Fase 1
 
-### Archivos críticos creados
+- `supabase/migrations/001_auth_profiles.sql` — tabla `profiles` + trigger `handle_new_user` (auto-crea profile al registrarse, lee metadata de Google).
+- `supabase/migrations/002_waitlist.sql` — tabla `waitlist` (email unique).
+- `supabase/migrations/003_core_items.sql` — CRUD genérico del MVP.
+- `supabase/migrations/007_rls_policies.sql` — RLS en las 3 tablas (dueño total sobre lo suyo; waitlist insert público).
+- `supabase/config.toml`, `supabase/seed.sql`.
+- `web/lib/supabase/{client,server,middleware}.js` — patrón oficial @supabase/ssr. `server.js` exporta `getUser()`.
+- `web/middleware.js` — reemplaza el stub: refresca sesión + protege `/dashboard|/account|/chat`. **Guard**: si no hay env de Supabase, deja pasar todo (la landing de Sem 1 funciona sin configurar nada).
+- `web/app/login/page.js` — login (redirige a dashboard si ya hay sesión).
+- `web/components/auth/GoogleButton.js` — `signInWithOAuth` con Google.
+- `web/app/auth/callback/route.js` — `exchangeCodeForSession` + redirect (maneja proxy de Vercel).
+- `web/lib/auth/actions.js` — server action `signOut`.
+- `web/components/auth/UserMenu.js` — avatar + cerrar sesión.
+- `web/app/(app)/layout.js` — guard + sidebar + UserMenu.
+- `web/app/(app)/dashboard/page.js` + `dashboard/actions.js` — CRUD de `core_items` con server actions (create/toggle/delete), filtra por user_id + RLS.
+- `web/app/api/waitlist/route.js` — ahora inserta real en `waitlist` (trata email duplicado como éxito).
+- `web/package.json` — agregadas deps `@supabase/ssr`, `@supabase/supabase-js`.
 
-- `package.json` (root, workspaces)
-- `web/config.js` ← el más importante
-- `web/app/layout.js`, `web/app/(marketing)/layout.js`, `web/app/(marketing)/page.js`
-- `web/app/(marketing)/docs/layout.js`, `docs/page.js`, `docs/[[...slug]]/page.js`
-- `web/lib/docs.js` (walk del filesystem para sidebar)
-- `web/components/landing/*` (4 archivos)
-- `web/components/docs/*` (9 archivos)
-- `docs-content/**/*.mdx` (31 archivos)
+### Verificado automáticamente (sin credenciales)
 
-## Cómo retomar
+- `yarn build` limpio (46 páginas, sin errores de lint/MDX).
+- `yarn dev` levanta; probado por HTTP:
+  - `/`, `/docs`, `/docs/setup/quick-start`, `/docs/tutoriales/semana-1-landing`, `/login` → **200**
+  - `/dashboard` → **307 → /login** (protección OK).
 
-### 1. Libera espacio
+## Verificación end-to-end pendiente (necesita TUS credenciales)
 
-```bash
-# El cuello de botella era /private/tmp/claude-501
-sudo rm -rf /private/tmp/claude-501
+No pude probar el flujo real de auth/DB porque requiere un proyecto Supabase + Google OAuth + `.env.local`, que no puedo crear por ti. Pasos:
 
-# (Opcional) más limpieza
-brew cleanup -s
-yarn cache clean
-```
+1. **Crea proyecto Supabase Cloud** y copia URL + anon key + service_role.
+2. **Crea `web/.env.local`** (`cp web/.env.example web/.env.local`) y pega las 3 vars de Supabase.
+   - ⚠️ No pude editar `.env.example` (política de archivos env en esta sesión). Confirma que tenga `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Si falta alguna, agrégala.
+3. **Sube migrations**: con Supabase CLI `supabase link` + `supabase db push` (o pega los 4 SQL en el SQL Editor en orden 001→002→003→007).
+4. **Configura Google** en Supabase: Authentication → Providers → Google (client id/secret de Google Cloud Console). Redirect URL: `https://TU-PROYECTO.supabase.co/auth/v1/callback`.
+5. `nvm use && yarn dev`. Prueba:
+   - `/login` → "Continuar con Google" → consientes → vuelves a `/dashboard`.
+   - En Supabase, tabla `profiles` tiene tu fila (creada por el trigger).
+   - En `/dashboard`: crea / marca hecho / borra un item. Verifica en tabla `core_items` que `user_id` es el tuyo.
+   - Logout desde el UserMenu → vuelves a `/`.
+   - En la landing, manda un email al waitlist → aparece en tabla `waitlist`.
 
-Reinicia la Mac.
+## Cómo retomar con Claude
 
-### 2. Verifica que Fase 0 corre
+`nvm use` y luego, en `~/VibeFast`: dime **"continúa con Fase 2"** (Email + Deploy story):
+- Resend: cliente + templates (WaitlistConfirm, Welcome).
+- Webhook `/api/webhooks/resend`.
+- Conectar waitlist → envío de email de confirmación.
+- Guía Vercel + Supabase producción.
 
-```bash
-cd ~/VibeFast
-yarn install         # ~1-2 min la primera vez
-yarn dev
-```
+Plan completo (Fases 1-7): `/Users/ampersand/.claude/plans/users-ampersand-downloads-temario-v2-cu-rippling-owl.md`
 
-Abre:
-- `http://localhost:3000` → landing con título "VibeFast"
-- `http://localhost:3000/docs` → índice de docs con sidebar de 8 secciones
-- `http://localhost:3000/docs/tutoriales/semana-1-landing` → tutorial con PromptBox
+## Notas que NO se deben perder
 
-Edita `web/config.js`:
-- Cambia `app.name` → recarga, debe reflejarse en navbar y footer
-- Cambia `brand.primary` (un hex distinto) → recarga, el color de botones cambia
-
-Si algo falla → revisa `docs-content/troubleshooting/errores-comunes.mdx` o avísame.
-
-### 3. Retoma con Claude Code
-
-Desde la terminal, en `~/VibeFast`:
-
-```bash
-claude --continue
-```
-
-O alternativamente:
-
-```bash
-cd ~/VibeFast
-claude
-# y dentro: /resume
-```
-
-Cuando arranque la nueva sesión, dime: **"retoma desde el checkpoint, continúa con Fase 1"** y yo arrancaré con:
-
-- **Fase 1** (1 semana de trabajo equivalente):
-  - Migrations Supabase 001-003 + 007 (RLS)
-  - Cliente Supabase (browser + server)
-  - Google Auth end-to-end (`/login`, callback, logout, middleware con refresh de sesión)
-  - Layout `(app)` con guard + UserMenu
-  - `/dashboard` con CRUD genérico de `core_items`
-  - Conectar el form de waitlist al stub `/api/waitlist` con Supabase real
-
-El plan completo de todas las fases (1-7) está en:
-`/Users/ampersand/.claude/plans/users-ampersand-downloads-temario-v2-cu-rippling-owl.md`
-
-## Notas importantes para retomar
-
-- **No corras `npm install`** — todo es yarn 1.x con workspaces. Si te equivocas, borra `node_modules/` y `package-lock.json` y haz `yarn install`.
-- **El monorepo tiene Root Directory en `web`** — cuando deployes a Vercel, esa config es crítica (ver `docs-content/deploy/vercel.mdx`).
-- **`docs-content/` vive en la raíz del monorepo, no dentro de `/web`** — `web/lib/docs.js` lo resuelve con `path.join(process.cwd(), '..', 'docs-content')`. Si en algún momento mueves `/web` a otra profundidad, ajusta esa ruta.
-- **`config.js` se evalúa en build** — cambios requieren re-deploy en producción (no es hot reload).
-
-## Decisiones tomadas (para que no se pierda contexto)
-
-- Alcance: **todo incluido día 1** (Auth, OpenAI, tool use, LangGraph, MCP, RAG, Resend, PostHog)
-- Docs: **dentro del boilerplate** en `/docs` (MDX)
-- Idioma: **español** (curso es para founders mexicanos)
-- Estructura: **monorepo** con `/web` y `/firmware` (yarn workspaces)
-- Stack: Next.js 15 + Tailwind 4 + DaisyUI 5 + Supabase + Google Auth + OpenAI + LangGraph.js + MCP + Resend + PostHog (opt) + yarn 1.x + JavaScript (no TS)
+- **Node 20/22 LTS obligatorio** — corre `nvm use` (hay `.nvmrc`). Node 23 rompe el install.
+- **yarn 1.x con workspaces** — nunca `npm install`. Root Directory en Vercel = `web`.
+- **`docs-content/` vive en la raíz**, no en `/web` (`web/lib/docs.js` lo resuelve con `..`).
+- **`config.js` se evalúa en build** — cambios en prod requieren re-deploy.
+- **Middleware tiene guard de env** — sin Supabase configurado la app pública sigue corriendo (a propósito, para Sem 1).
+- **RLS + filtro por user_id** en las server actions: defensa en profundidad, no quitar uno por el otro.
