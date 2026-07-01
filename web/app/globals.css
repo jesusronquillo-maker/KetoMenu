@@ -109,6 +109,22 @@ h4,
   background-color: var(--color-base-100);
 }
 
+/* Patrón de cuadrícula sutil para el fondo del Hero (se adapta al tema). */
+.hero-grid {
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in oklch, var(--color-base-content) 7%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--color-base-content) 7%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 44px 44px;
+}
+
 /* Prose tweaks para /docs — ritmo vertical amplio para no abrumar */
 .prose-vf h1 {
   @apply text-4xl font-bold tracking-tight mt-2 mb-6;

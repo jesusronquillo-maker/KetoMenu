@@ -111,7 +111,7 @@ const config = {
       title: "Lleva tu idea de founder a un producto AI-native en 11 semanas.",
       subtitle:
         "VibeFast es la plantilla del curso: Next.js, Supabase, OpenAI y MCP cableados desde el día 1. Tú extiendes con prompts en Cursor.",
-      cta: { label: "Únete al waitlist", href: "#waitlist" },
+      cta: { label: "De 0 a producto", href: "#waitlist" },
       ctaSecondary: { label: "Ver docs", href: "/docs" },
     },
     problem: {
