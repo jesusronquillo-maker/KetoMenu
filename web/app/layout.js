@@ -7,6 +7,7 @@ const spaceGrotesk = Space_Grotesk({
   weight: ["500", "600", "700"],
   variable: "--font-space-grotesk",
   display: "swap",
+  preload: false,
 })
 
 const dmSans = DM_Sans({
@@ -14,6 +15,7 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "700"],
   variable: "--font-dm-sans",
   display: "swap",
+  preload: false,
 })
 
 export const metadata = {
