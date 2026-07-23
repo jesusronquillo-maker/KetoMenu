@@ -1,5 +1,5 @@
 // ============================================================
-git// VibeFast · config.js
+// VibeFast · config.js
 // ------------------------------------------------------------
 // ESTE ES EL ARCHIVO MÁS IMPORTANTE DEL BOILERPLATE.
 // Todo el branding, copy, features y configuración del producto vive aquí.
